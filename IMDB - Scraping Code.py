@@ -64,11 +64,11 @@ userprofile_db.to_csv('userprofile_db.csv', index = False)
     #        user1 = profile # Assign url
 
        # Add Column for user rating
-       user_name = userprofile_db['Name'][2]
+       user_name = userprofile_db['Name'][10]
        userratings_db[user_name] = np.nan
         
        #Get url and convert to bs4
-       user1 = userprofile_db["Profile Link"][2]
+       user1 = userprofile_db["Profile Link"][10]
         
        if requests.get(user1+'/ratings').status_code == 200:
            page_url = user1 + '/ratings'
@@ -84,8 +84,7 @@ userprofile_db.to_csv('userprofile_db.csv', index = False)
             
        else:
             print(400)
-            
-                   
+                               
             #Identify total number of ratings
 
             n = html_soup_user1.find('div', class_ = 'header').span.text
@@ -139,7 +138,7 @@ userprofile_db.to_csv('userprofile_db.csv', index = False)
             #Identify total number of reviews
 
             n = html_soup_user1.find('div', class_ = 'header').span.text
-            n = int(n.replace(',', ''))
+            n = int(n.split()[0].replace(',',''))
 
             # Identify number of pages to be scraped
 
@@ -159,14 +158,15 @@ userprofile_db.to_csv('userprofile_db.csv', index = False)
                 
                 for movie in movie_containers:
                     
-                    link = 'https://www.imdb.com' + movie.h3.a.get('href')
-                    first_div = movie.find('div',class_ = "ipl-rating-star ipl-rating-star--other-user small")
+                    link = 'https://www.imdb.com' + movie.a.get('href')
+                    rating = movie.find('span',class_ = "rating-other-user-rating")
                     
-                    rating = first_div.find('span', class_ = "ipl-rating-star__rating").text
-                
                     if rating is None:
                         rating = np.nan
                     
+                    else:
+                        rating = rating.span.text
+                                        
                     if link in list(userratings_db['Movie Link']):
                         
                         mov_ind = list(userratings_db['Movie Link']).index(link)
@@ -174,7 +174,7 @@ userprofile_db.to_csv('userprofile_db.csv', index = False)
                         userratings_db.loc[mov_ind,user_name] = rating
                          
                     else:
-                        name = movie.h3.a.text
+                        name = movie.find('div', class_ = "lister-item-header").a.text
                         
                         userratings_db = userratings_db.append({'Movie Name' : name, 
                                             'Movie Link' : link,
